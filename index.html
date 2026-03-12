@@ -337,6 +337,127 @@
       display: none;
     }
 
+    /* 결과 영역 */
+    #result-section {
+      display: none;
+      padding: 20px 24px;
+      border-top: 2px solid #d0e4f2;
+      background: #f7fafd;
+    }
+
+    .result-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2a5a80;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .score-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-label {
+      font-size: 12px;
+      color: #444;
+      width: 170px;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    .score-bar-wrap {
+      flex: 1;
+      background: #dce8f2;
+      border-radius: 6px;
+      height: 18px;
+      overflow: hidden;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      background: #5B8DB8;
+      transition: width 0.6s ease;
+    }
+
+    .score-num {
+      font-size: 12px;
+      font-weight: 700;
+      color: #2a5a80;
+      width: 40px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .result-box {
+      border-radius: 8px;
+      padding: 14px 18px;
+      background: #fff;
+      border-left: 5px solid #5B8DB8;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+
+    .result-type {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1a3d5c;
+      margin-bottom: 6px;
+    }
+
+    .result-desc {
+      font-size: 13px;
+      color: #444;
+      line-height: 1.7;
+    }
+
+    .result-tip {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #eaf3fb;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #2a5a80;
+      line-height: 1.6;
+    }
+
+    .btn-result {
+      background: #fff;
+      color: #5B8DB8;
+      border: 2px solid #5B8DB8;
+      border-radius: 8px;
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-result:hover {
+      background: #5B8DB8;
+      color: #fff;
+    }
+
+    @media (max-width: 600px) {
+      .score-label { width: 110px; font-size: 11px; }
+      .result-type { font-size: 14px; }
+      .result-desc { font-size: 12px; }
+    }
+
     /* 모바일 반응형 */
     @media (max-width: 600px) {
       .page-wrapper {
@@ -425,17 +546,33 @@
       </table>
     </div>
 
+    <!-- 결과 영역 (기본 숨김, 버튼 클릭 시 표시) -->
+    <div id="result-section">
+      <div class="result-title">📊 결과 해석</div>
+      <div class="score-bars" id="score-bars"></div>
+      <div class="result-box" id="result-box">
+        <div class="result-type" id="result-type"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-tip" id="result-tip"></div>
+      </div>
+    </div>
+
   </div><!-- /#capture-area -->
 
 </div><!-- /.page-wrapper -->
 
 <!-- Sticky bottom bar -->
 <div class="sticky-bottom">
-  <div>
-    <button class="btn-capture" id="captureBtn">
-      <span class="btn-icon">📷</span> 캡처 저장
+  <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn-result" id="resultBtn">
+      <span>📊</span> 결과 보기
     </button>
-    <div class="capture-hint">PNG 파일로 다운로드됩니다</div>
+    <div>
+      <button class="btn-capture" id="captureBtn">
+        <span class="btn-icon">📷</span> 캡처 저장
+      </button>
+      <div class="capture-hint">PNG 파일로 다운로드됩니다</div>
+    </div>
   </div>
 </div>
 
@@ -575,6 +712,86 @@
 
     btn.disabled = false;
     btn.innerHTML = '<span class="btn-icon">📷</span> 캡처 저장';
+  });
+
+  // ── 결과 보기 ──────────────────────────────────────────
+  document.getElementById('resultBtn').addEventListener('click', function () {
+    const scoreMap = { '하': 1, '중': 2, '상': 3 };
+    const groupKeys = ['always', 'problem', 'reduce'];
+    const scores = { always: 0, problem: 0, reduce: 0 };
+    let unanswered = false;
+
+    questions.forEach((_, i) => {
+      groupKeys.forEach(group => {
+        const checked = document.querySelector(`input[name="q${i}_${group}"]:checked`);
+        if (!checked) { unanswered = true; return; }
+        scores[group] += scoreMap[checked.value];
+      });
+    });
+
+    if (unanswered) {
+      showToast('⚠️ 모든 항목을 선택해주세요!');
+      return;
+    }
+
+    // 점수 막대 렌더링
+    const barData = [
+      { label: '항상 미룬다', key: 'always', color: '#5B8DB8' },
+      { label: '미루기가 문제다', key: 'problem', color: '#e07b54' },
+      { label: '변화 희망 정도', key: 'reduce', color: '#5aaa7a' },
+    ];
+    const barsEl = document.getElementById('score-bars');
+    barsEl.innerHTML = '';
+    barData.forEach(({ label, key, color }) => {
+      const score = scores[key];
+      const pct = Math.round((score / 21) * 100);
+      barsEl.innerHTML += `
+        <div class="score-row">
+          <div class="score-label">${label}</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar-fill" style="width:${pct}%; background:${color};"></div>
+          </div>
+          <div class="score-num">${score} / 21</div>
+        </div>`;
+    });
+
+    // 유형 판정
+    const A = scores.always, B = scores.problem, C = scores.reduce;
+    const lvA = A <= 10 ? 'low' : A <= 15 ? 'mid' : 'high';
+    const lvB = B <= 10 ? 'low' : B <= 15 ? 'mid' : 'high';
+    const lvC = C <= 10 ? 'low' : C <= 15 ? 'mid' : 'high';
+
+    let type, desc, tip;
+
+    if (lvA === 'low') {
+      type = '✅ 미루기 관리 우수형';
+      desc = '전반적으로 미루기 습관이 낮아 학습 과제를 계획적으로 처리하고 있습니다. 현재의 좋은 습관을 꾸준히 유지하는 것이 중요합니다.';
+      tip = '💡 현재 수준을 유지하면서 학습 효율을 더 높이는 전략(예: 포모도로 기법, 우선순위 매트릭스)을 탐색해보세요.';
+    } else if (lvB === 'low') {
+      type = '⚠️ 미루기 무감각형';
+      desc = '미루기 행동이 나타나고 있지만 이를 아직 문제로 인식하지 못하고 있습니다. 미루기가 학업 성과에 미치는 영향을 점검해볼 필요가 있습니다.';
+      tip = '💡 미루었던 과제가 성적이나 스트레스에 어떤 영향을 주었는지 기록해보는 것이 자기 인식을 높이는 데 도움이 됩니다.';
+    } else if (lvC === 'low') {
+      type = '😔 체념형 (변화 의지 부족)';
+      desc = '미루기가 문제임을 알고 있지만 변화 의지가 낮은 상태입니다. 반복되는 실패로 무기력감을 느끼고 있을 수 있습니다.';
+      tip = '💡 큰 목표 대신 "오늘 10분만 시작하기"처럼 매우 작은 행동 목표를 설정해보세요. 작은 성공 경험이 동기를 회복시켜줍니다.';
+    } else if (lvA === 'high' && lvB === 'high' && lvC === 'high') {
+      type = '🚀 변화 준비형 (적극적 개선 의지)';
+      desc = '미루기 문제를 명확히 인식하고 있으며 개선 의지도 강합니다. 지금이 변화를 시작하기에 가장 좋은 시점입니다.';
+      tip = '💡 구체적인 시간 계획표 작성, 학습 파트너 설정, 또는 학습 코칭 프로그램 참여를 통해 실천력을 높여보세요.';
+    } else {
+      type = '🔄 인식·실천 균형형';
+      desc = '미루기 경향과 문제 인식, 변화 희망이 중간 수준으로 균형을 이루고 있습니다. 조금 더 적극적인 자기 관리로 개선이 가능합니다.';
+      tip = '💡 가장 미루는 과제 유형 1~2가지를 골라 구체적인 실행 계획(언제, 어디서, 얼마나)을 세워보세요.';
+    }
+
+    document.getElementById('result-type').textContent = type;
+    document.getElementById('result-desc').textContent = desc;
+    document.getElementById('result-tip').textContent = tip;
+
+    const resultSection = document.getElementById('result-section');
+    resultSection.style.display = 'block';
+    setTimeout(() => resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   });
 
   function showToast(msg) {
