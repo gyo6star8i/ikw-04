@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학습 시간 관리 - 미루기 점검</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+
+    .page-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 30px 20px 20px;
+    }
+
+    /* Name input area */
+    .name-section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .name-section label {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+    }
+
+    .name-section input[type="text"] {
+      flex: 1;
+      max-width: 280px;
+      padding: 8px 14px;
+      border: 2px solid #5B8DB8;
+      border-radius: 6px;
+      font-size: 15px;
+      font-family: inherit;
+      color: #333;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .name-section input[type="text"]:focus {
+      border-color: #3a6d9a;
+      box-shadow: 0 0 0 3px rgba(91,141,184,0.18);
+    }
+
+    /* Capture area (card) */
+    #capture-area {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      overflow: hidden;
+    }
+
+    /* Title block */
+    .title-block {
+      display: flex;
+      align-items: stretch;
+      padding: 22px 24px;
+      border-bottom: 2px solid #d0e4f2;
+      gap: 0;
+    }
+
+    .title-accent-bar {
+      width: 7px;
+      background: #f5c518;
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-right: 14px;
+    }
+
+    .title-text-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .title-main {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1a2a3a;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .title-sub {
+      font-size: 13px;
+      color: #6b7f90;
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    .title-name-display {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: #4a6a85;
+      font-weight: 600;
+      gap: 6px;
+      padding-left: 20px;
+    }
+
+    .title-name-display span.label {
+      color: #8a9faf;
+      font-weight: 400;
+    }
+
+    /* Table container */
+    .table-container {
+      padding: 0 0 20px 0;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    /* Header rows */
+    thead tr:first-child th {
+      background: #5B8DB8;
+      color: #fff;
+      font-weight: 700;
+      padding: 11px 8px;
+      text-align: center;
+      border: 1px solid #4a7aa3;
+      font-size: 13.5px;
+    }
+
+    thead tr:first-child th:first-child {
+      background: #3a6d9a;
+      font-size: 13px;
+    }
+
+    thead tr:nth-child(2) th {
+      background: #6fa0c8;
+      color: #fff;
+      font-weight: 700;
+      padding: 8px 6px;
+      text-align: center;
+      border: 1px solid #4a7aa3;
+      font-size: 13px;
+    }
+
+    thead tr:nth-child(2) th:first-child {
+      background: #3a6d9a;
+    }
+
+    /* Body rows */
+    tbody tr:nth-child(odd) td {
+      background: #EAF1F8;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: #fff;
+    }
+
+    tbody tr:hover td {
+      filter: brightness(0.97);
+    }
+
+    tbody td {
+      padding: 10px 8px;
+      border: 1px solid #c8d9e8;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    tbody td:first-child {
+      text-align: left;
+      padding-left: 18px;
+      font-weight: 500;
+      color: #222;
+      font-size: 13.5px;
+      min-width: 160px;
+    }
+
+    /* Radio button styling */
+    .radio-cell {
+      position: relative;
+    }
+
+    .radio-cell input[type="radio"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border: 2px solid #8ab0cc;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+      display: inline-block;
+      vertical-align: middle;
+      background: #fff;
+    }
+
+    .radio-cell input[type="radio"]:hover {
+      border-color: #5B8DB8;
+      box-shadow: 0 0 0 3px rgba(91,141,184,0.15);
+    }
+
+    .radio-cell input[type="radio"]:checked {
+      border-color: #2a6496;
+      background: #5B8DB8;
+      box-shadow: 0 0 0 3px rgba(91,141,184,0.25);
+    }
+
+    .radio-cell input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    /* Highlight selected cell */
+    .radio-cell.selected {
+      background: #c2daf0 !important;
+    }
+
+    /* Group separator lines between the 3 category sections */
+    thead tr:first-child th:nth-child(2),
+    thead tr:first-child th:nth-child(3),
+    thead tr:nth-child(2) th:nth-child(2),
+    thead tr:nth-child(2) th:nth-child(5),
+    tbody td:nth-child(2),
+    tbody td:nth-child(5),
+    tbody td:nth-child(8) {
+      border-left: 2px solid #5B8DB8;
+    }
+
+    /* Sticky bottom bar */
+    .sticky-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.97);
+      border-top: 2px solid #d0e4f2;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.10);
+      z-index: 1000;
+    }
+
+    .btn-capture {
+      background: #5B8DB8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 13px 36px;
+      font-size: 17px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 3px 12px rgba(91,141,184,0.35);
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      letter-spacing: -0.3px;
+    }
+
+    .btn-capture:hover {
+      background: #3a6d9a;
+      box-shadow: 0 5px 18px rgba(91,141,184,0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-capture:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(91,141,184,0.30);
+    }
+
+    .btn-capture .btn-icon {
+      font-size: 20px;
+    }
+
+    .capture-hint {
+      font-size: 12px;
+      color: #8a9faf;
+      text-align: center;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: #2a6496;
+      color: #fff;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      z-index: 2000;
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Print / capture-only styles */
+    .capture-only {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ PNG 파일이 저장되었습니다!</div>
+
+<div class="page-wrapper">
+
+  <!-- Name input (outside capture area) -->
+  <div class="name-section">
+    <label for="authorName">✏️ 작성자 이름</label>
+    <input type="text" id="authorName" placeholder="이름을 입력하세요" autocomplete="off" />
+  </div>
+
+  <!-- Capture area -->
+  <div id="capture-area">
+
+    <!-- Title -->
+    <div class="title-block">
+      <div class="title-accent-bar"></div>
+      <div class="title-text-group">
+        <div class="title-main">학습 시간 관리</div>
+        <div class="title-sub">학교 생활에서의 미루기 수준 점검</div>
+      </div>
+      <div class="title-name-display" id="nameDisplay" style="display:none;">
+        <span class="label">작성자:</span>
+        <span id="nameDisplayText"></span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table id="checklist-table">
+        <thead>
+          <tr>
+            <th rowspan="2" style="min-width:160px;">질문</th>
+            <th colspan="3">항상 미룬다</th>
+            <th colspan="3">미루기가 문제다</th>
+            <th colspan="3">미루기가 감소하기를 바라는 정도</th>
+          </tr>
+          <tr>
+            <th>하</th><th>중</th><th>상</th>
+            <th>하</th><th>중</th><th>상</th>
+            <th>하</th><th>중</th><th>상</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Rows generated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /#capture-area -->
+
+</div><!-- /.page-wrapper -->
+
+<!-- Sticky bottom bar -->
+<div class="sticky-bottom">
+  <div>
+    <button class="btn-capture" id="captureBtn">
+      <span class="btn-icon">📷</span> 캡처 저장
+    </button>
+    <div class="capture-hint">PNG 파일로 다운로드됩니다</div>
+  </div>
+</div>
+
+<script>
+  const questions = [
+    '학기말 과제 작성',
+    '시험 공부',
+    '과제물로 나온 자료 읽기',
+    '행정적인 처리',
+    '출석 과제',
+    '온라인 콘텐츠 수강',
+    '일반적인 학교 활동'
+  ];
+
+  const groups = ['always', 'problem', 'reduce'];
+  const levels = ['하', '중', '상'];
+
+  // Build table rows
+  const tbody = document.getElementById('table-body');
+
+  questions.forEach((q, i) => {
+    const tr = document.createElement('tr');
+
+    // Question label cell
+    const tdQ = document.createElement('td');
+    tdQ.textContent = q;
+    tr.appendChild(tdQ);
+
+    // Radio cells: 3 groups × 3 levels
+    groups.forEach(group => {
+      levels.forEach(level => {
+        const td = document.createElement('td');
+        td.classList.add('radio-cell');
+        td.dataset.q = i;
+        td.dataset.group = group;
+        td.dataset.level = level;
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `q${i}_${group}`;
+        radio.value = level;
+
+        radio.addEventListener('change', function () {
+          // Remove 'selected' from sibling cells in same group
+          document.querySelectorAll(`[data-q="${i}"][data-group="${group}"]`).forEach(cell => {
+            cell.classList.remove('selected');
+          });
+          if (this.checked) {
+            td.classList.add('selected');
+          }
+        });
+
+        td.appendChild(radio);
+        tr.appendChild(td);
+      });
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  // Update name display
+  const authorInput = document.getElementById('authorName');
+  const nameDisplay = document.getElementById('nameDisplay');
+  const nameDisplayText = document.getElementById('nameDisplayText');
+
+  authorInput.addEventListener('input', function () {
+    const val = this.value.trim();
+    if (val) {
+      nameDisplayText.textContent = val;
+      nameDisplay.style.display = 'flex';
+    } else {
+      nameDisplay.style.display = 'none';
+    }
+  });
+
+  // Capture
+  document.getElementById('captureBtn').addEventListener('click', async function () {
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-icon">⏳</span> 저장 중...';
+
+    // Ensure name is shown in capture area
+    const name = authorInput.value.trim();
+    if (name) {
+      nameDisplayText.textContent = name;
+      nameDisplay.style.display = 'flex';
+    }
+
+    try {
+      const captureEl = document.getElementById('capture-area');
+
+      const canvas = await html2canvas(captureEl, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        scrollX: 0,
+        scrollY: 0
+      });
+
+      // Build filename
+      const today = new Date();
+      const dateStr = today.getFullYear().toString() +
+        String(today.getMonth() + 1).padStart(2, '0') +
+        String(today.getDate()).padStart(2, '0');
+      const safeName = name ? name.replace(/[^가-힣a-zA-Z0-9]/g, '') || '이름없음' : '이름없음';
+      const filename = `미루기점검_${safeName}_${dateStr}.png`;
+
+      // Download
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Toast
+      showToast('✅ PNG 파일이 저장되었습니다!');
+    } catch (err) {
+      console.error('Capture error:', err);
+      showToast('❌ 저장 중 오류가 발생했습니다.');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">📷</span> 캡처 저장';
+  });
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
