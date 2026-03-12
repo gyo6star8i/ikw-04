@@ -67,7 +67,7 @@
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-      overflow: hidden;
+      overflow: visible;
     }
 
     /* Title block */
@@ -336,6 +336,42 @@
     .capture-only {
       display: none;
     }
+
+    /* 모바일 반응형 */
+    @media (max-width: 600px) {
+      .page-wrapper {
+        padding: 16px 8px 20px;
+      }
+      table {
+        font-size: 11px;
+      }
+      thead tr:first-child th {
+        font-size: 11px;
+        padding: 8px 4px;
+      }
+      thead tr:nth-child(2) th {
+        font-size: 11px;
+        padding: 6px 3px;
+      }
+      tbody td {
+        padding: 8px 4px;
+      }
+      tbody td:first-child {
+        padding-left: 8px;
+        font-size: 11px;
+        min-width: 90px;
+      }
+      .radio-cell input[type="radio"] {
+        width: 18px;
+        height: 18px;
+      }
+      .title-main {
+        font-size: 18px;
+      }
+      .title-block {
+        padding: 16px 14px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -491,13 +527,27 @@
     try {
       const captureEl = document.getElementById('capture-area');
 
+      // 전체 영역 캡처를 위해 맨 위로 스크롤
+      window.scrollTo(0, 0);
+      await new Promise(r => setTimeout(r, 100));
+
+      const fullWidth = captureEl.scrollWidth;
+      const fullHeight = captureEl.scrollHeight;
+
       const canvas = await html2canvas(captureEl, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        width: fullWidth,
+        height: fullHeight,
+        windowWidth: fullWidth,
+        windowHeight: fullHeight,
+        x: 0,
+        y: 0,
+        ignoreElements: el => el.classList.contains('sticky-bottom')
       });
 
       // Build filename
